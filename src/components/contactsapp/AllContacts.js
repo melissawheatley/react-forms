@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
-import { Card, Image, Button } from 'semantic-ui-react';
+import { Card, Image, Button, Divider, Icon } from 'semantic-ui-react';
+import AddForm from './AddForm';
 import { Link } from 'react-router-dom';
 
 export default class AllContacts extends Component{
     state={
-        contacts:[]
+        contacts:[], 
+        addContact: false
     }
 
     componentDidMount(){
@@ -28,11 +30,81 @@ export default class AllContacts extends Component{
         })
     }
 
+    saveContact = (userObject) =>{
+        userObject.ownerID = this.props.user.id
+        return fetch(`http://localhost:4000/contacts/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userObject)
+        }).then((data)=>{
+            return data.json();
+        }).then((result)=>{
+            this.setState({
+                //contact: result you want to set this state so that the update will re-render on it's own without refresh.
+                addContact: false
+            })
+            this.loadContacts(this.props.user.id)
+        })
+    }
+
+    addContact = () => {
+        this.setState({
+            addContact: true
+        })
+    }
+
+    cancelContactAdd = () => {
+        this.setState({
+            addContact: false
+        })
+    }
+
+    deleteContact = (id) => {
+       return fetch(`http://localhost:4000/contacts/${id}`, {
+           method: 'DELETE',
+           headers: {
+               'Content-Type': 'application/json'
+           }
+       }).then((response)=>{
+           const storedUser = sessionStorage.getItem('user');
+           const storedUserObj = JSON.parse(storedUser);
+           this.loadContacts(storedUserObj.id)
+       })
+    }
+
+    openForm = () => {
+        if(this.state.addContact){
+            return(
+                <div>
+                    <Divider section />
+                        <AddForm title="Add Contact" saveContact={this.saveContact} cancelContactAdd={this.cancelContactAdd} />
+                    <Divider section />
+                </div>
+            )
+        }else{
+            return(
+                <div>
+                    <Button 
+                        color='green' 
+                        onClick={this.addContact}
+                    >
+                    <Icon name='add user' />
+                        Add Contact
+                    </Button>
+                    <Divider section />
+                </div>
+            )
+        }
+    }
+
     render(){
         return( 
                 <div>
+                    {this.openForm()}
                     <h2>All Contacts</h2>
-                    <ContactsList contacts={this.state.contacts} />
+                    <ContactsList contacts={this.state.contacts} deleteContact={this.deleteContact} />
                 </div>
         )
     }
@@ -51,7 +123,7 @@ class ContactsList extends Component{
                 rating={contact.rating}
                 phone={contact.phone}
                 email={contact.email}
-                // deleteContact={this.props.deleteContact}
+                deleteContact={this.props.deleteContact}
             />
         ));
         return(
