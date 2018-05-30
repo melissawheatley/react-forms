@@ -14,6 +14,19 @@ export default class Authentication extends Component{
         }
     }
 
+    componentDidMount(){
+        const stored = sessionStorage.getItem('user');
+        if(stored){
+            // console.log('user from storage is', stored);
+                const parseDB = JSON.parse(stored);
+                console.log('parseDB', parseDB);
+                this.setState({
+                    authed: true,
+                    user: parseDB
+                })
+        }
+    }
+
     authenticateUser = (email, password) => {
         // if(this.state.user.email === email && this.state.user.password === password){
         //     this.setState({
@@ -31,9 +44,13 @@ export default class Authentication extends Component{
                 user: userArray[0],
                 authed: true
             })
+            const userObj = JSON.stringify(userArray[0]);
+            sessionStorage.setItem('user', userObj);
         }
         })
     }
+
+
 
     isUserAuthed = () => {
         if(this.state.authed){
